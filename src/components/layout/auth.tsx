@@ -1,17 +1,12 @@
-import { useForm } from "@tanstack/react-form";
+import { Lock, Mail } from "lucide-react";
+import React from "react";
 import * as z from "zod";
+import { useAppForm } from "~/hooks/form";
 import Button from "../ui/button";
-import Form, { ForFormField, FormSubscriber } from "../ui/form";
-import type { FormFieldSchema } from "../ui/form/type";
+import { Input, InputPassword } from "../ui/input";
 
 const signUpSchema = z.object({
-  username: z
-    .string()
-    .min(1, "Username is required")
-    .regex(
-      /^[a-z0-9._]+$/,
-      "Username must contain only lowercase letters, numbers, dots, or underscores"
-    ),
+  email: z.string().min(1, "Email is required").email(),
   password: z
     .string()
     .min(8, "Password must be at least 8 characters long")
@@ -20,29 +15,11 @@ const signUpSchema = z.object({
       "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
     ),
 });
-type TSignUpSchema = z.infer<typeof signUpSchema>;
-const SIGN_UP_SCHEMA: FormFieldSchema<TSignUpSchema>[] = [
-  {
-    name: "username",
-    label: "Username",
-    type: "text",
-    autoComplete: "username",
-    description: "Enter your unique username 🌟",
-    placeholder: "e.g., john_doe123",
-  },
-  {
-    name: "password",
-    label: "Password",
-    type: "text",
-    description: "Create a strong password 🔒",
-    placeholder: "e.g., P@ssw0rd!",
-  },
-];
 
 const Auth = () => {
-  const form = useForm<TSignUpSchema>({
+  const signInForm = useAppForm({
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
     validators: {
@@ -60,30 +37,87 @@ const Auth = () => {
     },
   });
 
+  const onSubmit = React.useCallback(
+    <T,>(e: React.FormEvent<T>) => {
+      e.stopPropagation();
+      e.preventDefault();
+      signInForm.handleSubmit();
+    },
+    [signInForm]
+  );
+
   return (
-    <div className=" container h-dvh flex items-center justify-center">
-      <Form
-        className="bg-card w-96 border rounded-xl py-12 px-6 space-y-4"
-        form={form}>
-        <ForFormField form={form} schemas={SIGN_UP_SCHEMA} />
-        <FormSubscriber form={form}>
-          {({ canSubmit, isSubmitting }) => (
-            <Button disabled={!canSubmit} isLoading={isSubmitting}>
-              {({ disabled, isLoading }) => {
-                return (
-                  <span>
-                    {isLoading
-                      ? "In progress..."
-                      : disabled
-                      ? "Complete the required fields"
-                      : "Submit"}
-                  </span>
-                );
-              }}
-            </Button>
-          )}
-        </FormSubscriber>
-      </Form>
+    <div className="w-full h-dvh flex p-4">
+      <div className="container max-w-md my-auto bg-accent border rounded-md p-2">
+        <div className="bg-card px-6 py-14 border rounded-md">
+          <form onSubmit={onSubmit} className="space-y-6 grid">
+            <div className="space-y-6">
+              <signInForm.AppField
+                name="email"
+                children={(field) => (
+                  <field.FormItem>
+                    <field.FormLabel>Username</field.FormLabel>
+                    <field.FormFieldWithIcon Icon={Mail}>
+                      <field.FormControl>
+                        <Input
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          placeholder="email@example.com"
+                        />
+                      </field.FormControl>
+                    </field.FormFieldWithIcon>
+                    <field.FormDescription>
+                      Enter your registered email address.
+                    </field.FormDescription>
+                    <field.FormMessage />
+                  </field.FormItem>
+                )}
+              />
+
+              <signInForm.AppField
+                name="password"
+                children={(field) => (
+                  <field.FormItem>
+                    <div className="grid grid-cols-2">
+                      <field.FormLabel>Password</field.FormLabel>
+                      <Button
+                        variant="link"
+                        className="p-0 h-auto justify-end text-sm leading-none">
+                        Forgot password?
+                      </Button>
+                    </div>
+                    <field.FormFieldWithIcon Icon={Lock}>
+                      <field.FormControl>
+                        <InputPassword
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          placeholder="**************"
+                        />
+                      </field.FormControl>
+                    </field.FormFieldWithIcon>
+                    <field.FormDescription>
+                      Enter your account password.
+                    </field.FormDescription>
+                    <field.FormMessage />
+                  </field.FormItem>
+                )}
+              />
+            </div>
+
+            <signInForm.Subscribe
+              selector={(state) => [state.canSubmit, state.isSubmitting]}
+              children={([canSubmit, isSubmitting]) => (
+                <Button
+                  type="submit"
+                  isPending={isSubmitting}
+                  disabled={!canSubmit}>
+                  {isSubmitting ? "Submitting..." : "Submit"}
+                </Button>
+              )}
+            />
+          </form>
+        </div>
+      </div>
     </div>
   );
 };

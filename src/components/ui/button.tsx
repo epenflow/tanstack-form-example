@@ -4,10 +4,8 @@ import { Loader2 } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "~/lib/utils";
-import { useExtendChildren, useExtendClassName } from "./helper";
-import type { ExtendProps, OmitProps } from "./type";
 
-const buttonVariants = cva(
+export const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 ring-ring/10 dark:ring-ring/20 dark:outline-ring/40 outline-ring/50 focus-visible:ring-4 focus-visible:outline-1 aria-invalid:focus-visible:ring-0",
   {
     variants: {
@@ -37,35 +35,24 @@ const buttonVariants = cva(
   }
 );
 
-type ButtonProps = OmitProps<React.ComponentProps<"button">> &
+type ButtonProps = React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
-    isLoading?: boolean;
-  } & ExtendProps<{ isLoading?: boolean; disabled?: boolean }>;
+    isPending?: boolean;
+  };
 const Button: React.FC<ButtonProps> = ({
-  className: _className,
-  isLoading,
+  className,
+  isPending,
   disabled,
   children,
-  render,
   variant,
   size,
   asChild = false,
   ...props
 }) => {
   const Comp = asChild ? Slot : "button";
-  const className = useExtendClassName({
-    context: { disabled, isLoading },
-    className: _className,
-  });
 
-  const jsxToDisplay = useExtendChildren({
-    children,
-    render,
-    context: { disabled, isLoading },
-  });
-
-  if (isLoading) {
+  if (isPending) {
     return (
       <Comp
         disabled={disabled}
@@ -73,7 +60,7 @@ const Button: React.FC<ButtonProps> = ({
         className={cn(buttonVariants({ variant, size, className }))}
         {...props}>
         <Loader2 className="animate-spin" />
-        {jsxToDisplay}
+        {children}
       </Comp>
     );
   }
@@ -84,7 +71,7 @@ const Button: React.FC<ButtonProps> = ({
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}>
-      {jsxToDisplay}
+      {children}
     </Comp>
   );
 };
