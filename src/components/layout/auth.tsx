@@ -1,11 +1,13 @@
-import { Lock, Mail } from "lucide-react";
+import type { DeepKeys } from "@tanstack/react-form";
+import { Lock, Mail, type LucideIcon } from "lucide-react";
 import React from "react";
 import * as z from "zod";
 import { useAppForm } from "~/hooks/form";
 import Button from "../ui/button";
 import { Input, InputPassword } from "../ui/input";
+import For from "./for";
 
-const signUpSchema = z.object({
+const signInSchema = z.object({
   email: z.string().min(1, "Email is required").email(),
   password: z
     .string()
@@ -15,16 +17,18 @@ const signUpSchema = z.object({
       "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
     ),
 });
+type SignInSchema = z.infer<typeof signInSchema>;
 
 const Auth = () => {
+  const { signInFields } = resources;
   const signInForm = useAppForm({
     defaultValues: {
       email: "",
       password: "",
     },
     validators: {
-      onChange: signUpSchema,
-      onChangeAsync: signUpSchema,
+      onChange: signInSchema,
+      onChangeAsync: signInSchema,
       onChangeAsyncDebounceMs: 500,
     },
     onSubmit: async (props) => {
@@ -52,54 +56,47 @@ const Auth = () => {
         <div className="bg-card px-6 py-14 border rounded-md">
           <form onSubmit={onSubmit} className="space-y-6 grid">
             <div className="space-y-6">
-              <signInForm.AppField
-                name="email"
-                children={(field) => (
-                  <field.FormItem>
-                    <field.FormLabel>Username</field.FormLabel>
-                    <field.FormFieldWithIcon Icon={Mail}>
-                      <field.FormControl>
-                        <Input
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          placeholder="email@example.com"
-                        />
-                      </field.FormControl>
-                    </field.FormFieldWithIcon>
-                    <field.FormDescription>
-                      Enter your registered email address.
-                    </field.FormDescription>
-                    <field.FormMessage />
-                  </field.FormItem>
-                )}
-              />
-
-              <signInForm.AppField
-                name="password"
-                children={(field) => (
-                  <field.FormItem>
-                    <div className="grid grid-cols-2">
-                      <field.FormLabel>Password</field.FormLabel>
-                      <Button
-                        variant="link"
-                        className="p-0 h-auto justify-end text-sm leading-none">
-                        Forgot password?
-                      </Button>
-                    </div>
-                    <field.FormFieldWithIcon Icon={Lock}>
-                      <field.FormControl>
-                        <InputPassword
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          placeholder="**************"
-                        />
-                      </field.FormControl>
-                    </field.FormFieldWithIcon>
-                    <field.FormDescription>
-                      Enter your account password.
-                    </field.FormDescription>
-                    <field.FormMessage />
-                  </field.FormItem>
+              <For
+                each={signInFields}
+                children={(schemaField, key) => (
+                  <signInForm.AppField
+                    key={`${key}-${schemaField.name}`}
+                    name={schemaField.name}
+                    children={(field) => (
+                      <field.FormFieldItem>
+                        <field.FormFieldLabel>
+                          {schemaField.label}
+                        </field.FormFieldLabel>
+                        <field.FormFieldControlIcon icon={<schemaField.icon />}>
+                          <field.FormFieldControl>
+                            {schemaField.name === "password" ? (
+                              <InputPassword
+                                value={field.state.value}
+                                placeholder={schemaField.placeholder}
+                                autoComplete={schemaField.autoComplete}
+                                onChange={(e) =>
+                                  field.handleChange(e.target.value)
+                                }
+                              />
+                            ) : (
+                              <Input
+                                value={field.state.value}
+                                placeholder={schemaField.placeholder}
+                                autoComplete={schemaField.autoComplete}
+                                onChange={(e) =>
+                                  field.handleChange(e.target.value)
+                                }
+                              />
+                            )}
+                          </field.FormFieldControl>
+                        </field.FormFieldControlIcon>
+                        <field.FormFieldDescription>
+                          {schemaField.description}
+                        </field.FormFieldDescription>
+                        <field.FormFieldMessage />
+                      </field.FormFieldItem>
+                    )}
+                  />
                 )}
               />
             </div>
@@ -122,3 +119,33 @@ const Auth = () => {
   );
 };
 export default Auth;
+
+type SignInSchemaField = {
+  name: DeepKeys<SignInSchema>;
+  label: string;
+  description: string;
+  autoComplete: React.HTMLInputAutoCompleteAttribute;
+  placeholder: string;
+  icon: LucideIcon;
+};
+
+const resources = {
+  signInFields: [
+    {
+      name: "email",
+      label: "Email",
+      icon: Mail,
+      autoComplete: "email",
+      description: "Enter your registered email address.",
+      placeholder: "example@mail.com",
+    },
+    {
+      name: "password",
+      label: "Password",
+      icon: Lock,
+      autoComplete: "current-password",
+      description: "Enter your password",
+      placeholder: "************",
+    },
+  ] satisfies SignInSchemaField[],
+};
