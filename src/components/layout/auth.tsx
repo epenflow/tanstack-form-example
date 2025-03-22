@@ -3,7 +3,6 @@ import { Lock, Mail, type LucideIcon } from "lucide-react";
 import React from "react";
 import * as z from "zod";
 import { useAppForm } from "~/hooks/form";
-import Button from "../ui/button";
 import { Input, InputPassword } from "../ui/input";
 import For from "./for";
 
@@ -101,17 +100,13 @@ const Auth = () => {
               />
             </div>
 
-            <signInForm.Subscribe
-              selector={(state) => [state.canSubmit, state.isSubmitting]}
-              children={([canSubmit, isSubmitting]) => (
-                <Button
-                  type="submit"
-                  isPending={isSubmitting}
-                  disabled={!canSubmit}>
-                  {isSubmitting ? "Submitting..." : "Submit"}
-                </Button>
-              )}
-            />
+            <signInForm.AppForm>
+              <signInForm.FormButton>
+                {({ isSubmitting }) =>
+                  isSubmitting ? "Submitting..." : "Submit"
+                }
+              </signInForm.FormButton>
+            </signInForm.AppForm>
           </form>
         </div>
       </div>
